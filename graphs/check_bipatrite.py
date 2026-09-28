@@ -33,7 +33,6 @@ def is_bipartite_dfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_dfs({7: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2], 4: [0]})
     False
 
-    >>> # FIXME: This test should fails with KeyError: 4.
     >>> is_bipartite_dfs({0: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2], 9: [0]})
     False
     >>> is_bipartite_dfs({0: [-1, 3], 1: [0, -2]})
@@ -43,8 +42,6 @@ def is_bipartite_dfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_dfs({0.9: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2]})
     True
 
-    >>> # FIXME: This test should fails with
-    >>> # TypeError: list indices must be integers or...
     >>> is_bipartite_dfs({0: [1.0, 3.0], 1.0: [0, 2.0], 2.0: [1.0, 3.0], 3.0: [0, 2.0]})
     True
     >>> is_bipartite_dfs({"a": [1, 3], "b": [0, 2], "c": [1, 3], "d": [0, 2]})
@@ -52,6 +49,19 @@ def is_bipartite_dfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_dfs({0: ["b", "d"], 1: ["a", "c"], 2: ["b", "d"], 3: ["a", "c"]})
     True
     """
+
+    # Normalize the input up front: a node referenced as a neighbor but
+    # omitted as a key is a sink with no out-edges, so it gets an empty
+    # adjacency list here. A missing key is then handled deliberately
+    # during the traversal below instead of raising an incidental
+    # KeyError. Sinks are appended after the original keys so they are
+    # colored while their component is traversed and never start a new
+    # one. The caller's dict is left untouched.
+    all_nodes: set = set(graph)
+    for neighbors in graph.values():
+        all_nodes.update(neighbors)
+    missing = {node: [] for node in all_nodes if node not in graph}
+    graph = {**graph, **missing}
 
     def depth_first_search(node: int, color: int) -> bool:
         """
@@ -113,7 +123,6 @@ def is_bipartite_bfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_bfs({7: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2], 4: [0]})
     False
 
-    >>> # FIXME: This test should fails with KeyError: 4.
     >>> is_bipartite_bfs({0: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2], 9: [0]})
     False
     >>> is_bipartite_bfs({0: [-1, 3], 1: [0, -2]})
@@ -123,8 +132,6 @@ def is_bipartite_bfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_bfs({0.9: [1, 3], 1: [0, 2], 2: [1, 3], 3: [0, 2]})
     True
 
-    >>> # FIXME: This test should fails with
-    >>> # TypeError: list indices must be integers or...
     >>> is_bipartite_bfs({0: [1.0, 3.0], 1.0: [0, 2.0], 2.0: [1.0, 3.0], 3.0: [0, 2.0]})
     True
     >>> is_bipartite_bfs({"a": [1, 3], "b": [0, 2], "c": [1, 3], "d": [0, 2]})
@@ -132,6 +139,18 @@ def is_bipartite_bfs(graph: dict[int, list[int]]) -> bool:
     >>> is_bipartite_bfs({0: ["b", "d"], 1: ["a", "c"], 2: ["b", "d"], 3: ["a", "c"]})
     True
     """
+    # Normalize the input up front: a node referenced as a neighbor but
+    # omitted as a key is a sink with no out-edges, so it gets an empty
+    # adjacency list here. A missing key is then handled deliberately
+    # during the traversal below instead of raising an incidental
+    # KeyError. Sinks are appended after the original keys so they are
+    # colored while their component is traversed and never start a new
+    # one. The caller's dict is left untouched.
+    all_nodes: set = set(graph)
+    for neighbors in graph.values():
+        all_nodes.update(neighbors)
+    missing = {node: [] for node in all_nodes if node not in graph}
+    graph = {**graph, **missing}
     visited: defaultdict[int, int] = defaultdict(lambda: -1)
     for node in graph:
         if visited[node] == -1:
